@@ -2,6 +2,8 @@
 
 Connect WordPress 7.0+ to [Azure AI Foundry](https://learn.microsoft.com/en-us/rest/api/aifoundry/modelinference/) for text generation, image generation, embeddings, and more.
 
+<img width="100%" alt="Screenshot 2026-03-30 at 12 34 57" src="https://github.com/user-attachments/assets/95721087-13c0-4f18-ad10-311ef89a2832" />
+
 ## Features
 
 - **AI Client integration** — registers as a WordPress 7.0 AI provider, usable via `wp_ai_client_prompt()` and Settings → Connectors.
