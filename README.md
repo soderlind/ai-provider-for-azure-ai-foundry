@@ -4,7 +4,8 @@ Connect WordPress 7.0+ to [Azure AI Foundry](https://learn.microsoft.com/en-us/r
 
  Works with WordPress 7 RC2. Tested using WordPress [AI](https://wordpress.org/plugins/ai/) (Re-generate title, re-generate summary and generate new feateure image). Text to speach tested using the[Talking Head](https://github.com/soderlind/talking-head) plugin.
 
-<img width="100%" alt="Screenshot 2026-03-30 at 12 34 57" src="https://github.com/user-attachments/assets/95721087-13c0-4f18-ad10-311ef89a2832" />
+
+<img width="100%" alt="Screenshot 2026-03-30 at 23 47 55" src="https://github.com/user-attachments/assets/2bf1d6d4-b298-434d-9da9-b48d068d2e68" />
 
 ## Features
 
