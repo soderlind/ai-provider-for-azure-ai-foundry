@@ -1,0 +1,14 @@
+{
+	"name": "soderlind/azure-ai-foundry",
+	"description": "Azure AI Foundry Connector for WordPress",
+	"type": "wordpress-plugin",
+	"license": "GPL-2.0-or-later",
+	"require": {
+		"php": ">=8.3",
+		"yahnis-elsts/plugin-update-checker": "^5.0"
+	},
+	"config": {
+		"optimize-autoloader": true,
+		"sort-packages": true
+	}
+}
