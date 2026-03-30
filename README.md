@@ -2,6 +2,8 @@
 
 Connect WordPress 7.0+ to [Azure AI Foundry](https://learn.microsoft.com/en-us/rest/api/aifoundry/modelinference/) for text generation, image generation, embeddings, and more.
 
+ Works with WordPress 7 RC2. Tested using WordPress [AI](https://wordpress.org/plugins/ai/) (Re-generate title, re-generate summary and generate new feateure image). Text to speach tested using [Talking Head](https://github.com/soderlind/talking-head) plugin.
+
 <img width="100%" alt="Screenshot 2026-03-30 at 12 34 57" src="https://github.com/user-attachments/assets/95721087-13c0-4f18-ad10-311ef89a2832" />
 
 ## Features
