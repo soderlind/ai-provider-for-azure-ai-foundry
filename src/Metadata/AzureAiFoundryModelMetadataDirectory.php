@@ -94,7 +94,7 @@ class AzureAiFoundryModelMetadataDirectory implements ModelMetadataDirectoryInte
 				return $meta;
 			}
 		}
-		throw new InvalidArgumentException( "Unknown model: $modelId" );
+		throw new InvalidArgumentException( 'Unknown model: ' . esc_html( $modelId ) );
 	}
 
 	/**

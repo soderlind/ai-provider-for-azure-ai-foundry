@@ -8,6 +8,10 @@
 
 namespace AzureAiFoundry\Settings;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 class ConnectorSettings {
 
 	// Option names — prefixed with connectors_ai_ to follow WP convention.

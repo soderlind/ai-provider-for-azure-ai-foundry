@@ -5,7 +5,7 @@
  * Description: Connect WordPress to Azure AI Foundry Model Inference API for text generation, embeddings, and more.
  * Requires at least: 7.0
  * Requires PHP: 8.3
- * Version: 0.3.1
+ * Version: 0.3.2
  * Author: Per Søderlind
  * Author URI: https://soderlind.no/
  * License: GPL-2.0-or-later
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	return;
 }
 
-define( 'AZURE_AI_FOUNDRY_VERSION', '0.3.1' );
+define( 'AZURE_AI_FOUNDRY_VERSION', '0.3.2' );
 define( 'AZURE_AI_FOUNDRY_FILE', __FILE__ );
 
 require_once __DIR__ . '/src/autoload.php';
