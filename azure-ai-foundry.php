@@ -5,7 +5,7 @@
  * Description: Connect WordPress to Azure AI Foundry Model Inference API for text generation, embeddings, and more.
  * Requires at least: 7.0
  * Requires PHP: 8.3
- * Version: 0.3.2
+ * Version: 0.3.3
  * Author: Per Søderlind
  * Author URI: https://soderlind.no/
  * License: GPL-2.0-or-later
@@ -24,8 +24,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	return;
 }
 
-define( 'AZURE_AI_FOUNDRY_VERSION', '0.3.2' );
+define( 'AZURE_AI_FOUNDRY_VERSION', '0.3.3' );
 define( 'AZURE_AI_FOUNDRY_FILE', __FILE__ );
+define( 'AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID', 'azure_ai_foundry_status' );
+define( 'AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION', 'connectors_ai_azure_ai_foundry_status_api_key' );
 
 require_once __DIR__ . '/src/autoload.php';
 
@@ -131,6 +133,25 @@ add_action( 'options-connectors-wp-admin_init', __NAMESPACE__ . '\\enqueue_conne
 add_action( 'connectors-wp-admin_init', __NAMESPACE__ . '\\enqueue_connector_module' );
 
 /**
+ * Remove the internal AI-plugin compatibility connector from the UI payload.
+ *
+ * The connector remains in the server-side registry so wp_get_connectors()
+ * can see it, but it should never be shown in Settings -> Connectors.
+ *
+ * @param array $data Script module data.
+ * @return array
+ */
+function filter_connector_script_data( array $data ): array {
+	if ( isset( $data['connectors'][ AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID ] ) ) {
+		unset( $data['connectors'][ AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID ] );
+	}
+
+	return $data;
+}
+add_filter( 'script_module_data_options-connectors-wp-admin', __NAMESPACE__ . '\\filter_connector_script_data' );
+add_filter( 'script_module_data_connectors-wp-admin', __NAMESPACE__ . '\\filter_connector_script_data' );
+
+/**
  * Unregister from the connector registry so core does not manage our API key.
  *
  * This prevents double-masking, failed key validation (our provider needs an
@@ -142,5 +163,45 @@ function unregister_from_connector_registry( \WP_Connector_Registry $registry ):
 	if ( $registry->is_registered( 'azure-ai-foundry' ) ) {
 		$registry->unregister( 'azure-ai-foundry' );
 	}
+
+	if ( ! $registry->is_registered( AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID ) ) {
+		$registry->register(
+			AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID,
+			[
+				'name'           => __( 'Azure AI Foundry Status', 'azure-ai-foundry' ),
+				'description'    => __( 'Internal compatibility connector for AI plugin detection.', 'azure-ai-foundry' ),
+				'type'           => 'ai_provider',
+				'authentication' => [
+					'method' => 'api_key',
+				],
+			]
+		);
+	}
 }
 add_action( 'wp_connectors_init', __NAMESPACE__ . '\\unregister_from_connector_registry' );
+
+/**
+ * Sync an internal sentinel option so the AI plugin sees a configured connector.
+ *
+ * The AI plugin checks wp_get_connectors() for ai_provider entries with a
+ * non-empty API-key option. Because this provider unregisters its visible
+ * connector to keep a custom UI, we expose a hidden compatibility connector
+ * instead and toggle its generated option based on real configuration.
+ */
+function sync_ai_plugin_credential_sentinel(): void {
+	$has_api_key = '' !== SettingsManager::instance()->get_real_api_key();
+	$has_endpoint = '' !== SettingsManager::instance()->get_endpoint();
+	$current = get_option( AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION, '' );
+
+	if ( $has_api_key && $has_endpoint ) {
+		if ( '1' !== $current ) {
+			update_option( AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION, '1' );
+		}
+		return;
+	}
+
+	if ( '' !== $current ) {
+		delete_option( AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION );
+	}
+}
+add_action( 'init', __NAMESPACE__ . '\\sync_ai_plugin_credential_sentinel', 35 );

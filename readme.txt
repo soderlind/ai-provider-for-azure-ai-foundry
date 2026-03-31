@@ -4,7 +4,7 @@ Tags: ai, azure, foundry, ai-provider, connectors
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 8.3
-Stable tag: 0.3.2
+Stable tag: 0.3.3
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -79,6 +79,10 @@ The plugin supports five capabilities: `text_generation`, `chat_history`, `image
 The plugin uses `2025-04-01-preview` for the Azure OpenAI surface. This is hardcoded and not user-configurable.
 
 == Changelog ==
+
+= 0.3.3 =
+* Fixed the Connect & Detect flow so it saves the API key and endpoint before deployment detection.
+* Fixed WordPress AI plugin compatibility so configured Azure AI Foundry credentials are recognized as a valid AI Connector.
 
 = 0.3.2 =
 * Escaped output in exception message (WordPress Plugin Check compliance).

@@ -9,7 +9,6 @@
 import {
 	__experimentalRegisterConnector as registerConnector,
 	__experimentalConnectorItem as ConnectorItem,
-	__experimentalDefaultConnectorSettings as DefaultConnectorSettings,
 } from '@wordpress/connectors';
 
 // ── Classic scripts — window globals ────────────────────────────
@@ -147,6 +146,7 @@ function useAzureSettings() {
 		isLoading,
 		isConnected,
 		apiKey,
+		setApiKey,
 		endpoint,
 		modelName,
 		capabilities,
@@ -166,6 +166,7 @@ function AzureAiFoundryConnector( { slug, name, description, logo } ) {
 		isLoading,
 		isConnected,
 		apiKey,
+		setApiKey,
 		endpoint,
 		modelName,
 		capabilities,
@@ -180,13 +181,22 @@ function AzureAiFoundryConnector( { slug, name, description, logo } ) {
 	const [ isDetecting, setIsDetecting ] = useState( false );
 	const [ statusMessage, setStatusMessage ] = useState( '' );
 	const [ statusType, setStatusType ] = useState( '' ); // 'success' | 'error'
+	const [ isReplacingApiKey, setIsReplacingApiKey ] = useState( false );
+
+	const hasSavedApiKey = apiKey.startsWith( '•' );
+	const canUseStoredApiKey = hasSavedApiKey && ! isReplacingApiKey;
+	const canConnect = endpoint && isValidAzureEndpoint( endpoint ) && ( apiKey || canUseStoredApiKey );
 
 	const handleConnect = async () => {
 		setIsDetecting( true );
 		setStatusMessage( '' );
 		try {
+			if ( ! canUseStoredApiKey && apiKey ) {
+				await saveApiKey( apiKey );
+			}
 			await saveEndpoint( endpoint );
 			const result = await detectDeployments( endpoint, apiKey );
+			setIsReplacingApiKey( false );
 			const capCount = result.capabilities?.length || 0;
 			const models = result.model_name || '';
 			setStatusMessage(
@@ -255,15 +265,29 @@ function AzureAiFoundryConnector( { slug, name, description, logo } ) {
 	const settingsPanel = isExpanded && el( 'div', null,
 		// ── API Key ─────────────────────────────────────────
 		el( 'h3', null, __( 'API Key', 'azure-ai-foundry' ) ),
-		el( DefaultConnectorSettings, {
-			key: isConnected ? 'connected' : 'disconnected',
-			onSave: saveApiKey,
-			onRemove: removeApiKey,
-			initialValue: apiKey,
-			readOnly: isConnected,
-			helpUrl: 'https://ai.azure.com/',
-			helpLabel: __( 'Get API key from Azure AI Foundry', 'azure-ai-foundry' ),
+		el( TextControl, {
+			label: __( 'API Key', 'azure-ai-foundry' ),
+			value: apiKey,
+			onChange: ( value ) => {
+				setStatusMessage( '' );
+				setApiKey( value );
+			},
+			placeholder: 'YOUR_API_KEY',
+			help: hasSavedApiKey && ! isReplacingApiKey
+				? __( 'Your API key is stored securely. You can replace it if needed.', 'azure-ai-foundry' )
+				: __( 'Get your API key from Azure AI Foundry.', 'azure-ai-foundry' ),
+			disabled: isDetecting || ( hasSavedApiKey && ! isReplacingApiKey ),
+			__next40pxDefaultSize: true,
 		} ),
+		hasSavedApiKey && ! isReplacingApiKey && el( Button, {
+			variant: 'link',
+			isDestructive: true,
+			onClick: async () => {
+				await removeApiKey();
+				setIsReplacingApiKey( true );
+				setStatusMessage( '' );
+			},
+		}, __( 'Remove and replace', 'azure-ai-foundry' ) ),
 
 		el( 'hr' ),
 
@@ -292,7 +316,7 @@ function AzureAiFoundryConnector( { slug, name, description, logo } ) {
 				__next40pxDefaultSize: true,
 				onClick: handleConnect,
 				isBusy: isDetecting,
-				disabled: isDetecting || ! endpoint || ! apiKey || ! isValidAzureEndpoint( endpoint ),
+				disabled: isDetecting || ! canConnect,
 			}, deploymentNames.length
 				? __( 'Save & Re-detect', 'azure-ai-foundry' )
 				: __( 'Connect & Detect', 'azure-ai-foundry' )
