@@ -51,7 +51,7 @@ Sign in to [Azure AI Foundry](https://ai.azure.com/) and create or select a proj
 
 The plugin supports three Azure endpoint types:
 
-* `https://{resource}.services.ai.azure.com/models` (Azure AI Services)
+* `https://{resource}.services.ai.azure.com/projects/PROJECT-NAME` (Azure AI Services)
 * `https://{resource}.openai.azure.com` (Azure OpenAI)
 * `https://{resource}.cognitiveservices.azure.com` (Cognitive Services)
 
