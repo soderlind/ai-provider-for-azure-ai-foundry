@@ -19,6 +19,10 @@ Connect WordPress 7.0+ to [Azure AI Foundry](https://learn.microsoft.com/en-us/r
 - **Environment variable fallback** — every setting can be overridden via environment variables or `wp-config.php` constants.
 - **Connectors page UI** — custom React-based connector on the Settings → Connectors page with fields for API key and endpoint URL. Detected deployments and capabilities displayed as read-only chips.
 
+## Documentation
+
+- [How to Build an AI Provider Plugin for WordPress 7](docs/how-to-add-ai-provider.md) — deep-dive into provider registration, settings, authentication, and the Connectors page UI.
+
 ## Requirements
 
 - WordPress 7.0 or later
@@ -101,9 +105,6 @@ azure-ai-foundry/
 └── vitest.config.js                  ← Test config
 ```
 
-## Documentation
-
-- [How to Build an AI Provider Plugin for WordPress 7](docs/how-to-add-ai-provider.md) — deep-dive into provider registration, settings, authentication, and the Connectors page UI.
 
 ## License
 
