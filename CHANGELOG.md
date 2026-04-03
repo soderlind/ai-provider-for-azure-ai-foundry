@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-04-03
+
+### Added
+
+- Embedding generation model (`AzureAiFoundryEmbeddingModel`) — supports text-embedding-ada-002, text-embedding-3-small/large deployments.
+- Text-to-speech model (`AzureAiFoundryTextToSpeechModel`) — supports tts-1 and tts-1-hd deployments via the `TextToSpeechConversionModelInterface`.
+- Auto-detection now resolves separate deployment names for text, image, embedding, and TTS model types.
+- Audio input modality for text generation models (GPT-4o audio support).
+- `topK` supported option for text generation models.
+- AI client library conflict detection — warns when the "AI Experiments" plugin ships an outdated `php-ai-client` that overrides WordPress 7.0's built-in version.
+
+### Fixed
+
+- TTS response parsing — uses `getBody()` instead of `getData()` to capture raw audio binary (the SDK's `getData()` JSON-decodes the response, returning `null` for binary audio).
+
 ## [0.3.3] - 2026-03-31
 
 ### Fixed

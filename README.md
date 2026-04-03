@@ -2,7 +2,7 @@
 
 Connect WordPress 7.0+ to [Azure AI Foundry](https://learn.microsoft.com/en-us/rest/api/aifoundry/modelinference/) for text generation, image generation, embeddings, and more.
 
- Works with WordPress 7 RC2. Tested using WordPress [AI](https://wordpress.org/plugins/ai/) (regenerate title, regenerate summary and generate new feateure image). Text to speach tested using the [Talking Head](https://github.com/soderlind/talking-head) plugin.
+ Works with WordPress 7 RC2. Tested using WordPress [AI](https://wordpress.org/plugins/ai/) (regenerate title, regenerate summary and generate new feature image). Text to speech tested using the [Talking Head](https://github.com/soderlind/talking-head) plugin.
 
 
 <img width="100%" alt="Screenshot 2026-03-30 at 23 47 55" src="https://github.com/user-attachments/assets/2bf1d6d4-b298-434d-9da9-b48d068d2e68" />
@@ -53,13 +53,15 @@ Model names and capabilities are normally auto-detected. Use these overrides onl
 Once configured, the provider is available to any code using the WordPress AI Client:
 
 ```php
-use WordPress\AiClient\AiClient;
+// Text generation
+$text = wp_ai_client_prompt( 'Explain gravity in one sentence.' )->generate_text();
+echo $text;
 
-$result = AiClient::prompt( 'Explain gravity in one sentence.' )
-    ->usingProvider( 'azure-ai-foundry' )
-    ->generateTextResult();
+// Image generation
+$image = wp_ai_client_prompt( 'A tiny blue cat on a cloud' )->generate_image();
 
-echo $result->getText();
+// Text-to-speech
+$audio = wp_ai_client_prompt( 'Hello world' )->convert_text_to_speech();
 ```
 
 ## Development
@@ -87,7 +89,7 @@ azure-ai-foundry/
 ├── src/
 │   ├── autoload.php                  ← PSR-4 autoloader
 │   ├── Provider/                     ← AI Client provider
-│   ├── Models/                       ← Text generation model
+│   ├── Models/                       ← Text, image, embedding & TTS models
 │   ├── Metadata/                     ← Model metadata & capabilities
 │   ├── Http/                         ← api-key authentication
 │   ├── Rest/                         ← REST API (capability detection)

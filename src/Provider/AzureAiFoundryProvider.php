@@ -32,6 +32,8 @@ use WordPress\AiClient\Providers\Models\Enums\CapabilityEnum;
 use AzureAiFoundry\Metadata\AzureAiFoundryModelMetadataDirectory;
 use AzureAiFoundry\Models\AzureAiFoundryTextGenerationModel;
 use AzureAiFoundry\Models\AzureAiFoundryImageGenerationModel;
+use AzureAiFoundry\Models\AzureAiFoundryEmbeddingModel;
+use AzureAiFoundry\Models\AzureAiFoundryTextToSpeechModel;
 use AzureAiFoundry\Settings\SettingsManager;
 
 class AzureAiFoundryProvider extends AbstractApiProvider {
@@ -105,8 +107,7 @@ class AzureAiFoundryProvider extends AbstractApiProvider {
 	/**
 	 * Create a model instance based on its capabilities.
 	 *
-	 * Routes to the appropriate model class: image generation models get
-	 * a dedicated class, everything else uses the text generation model.
+	 * Routes to the appropriate model class based on the primary capability.
 	 */
 	protected static function createModel(
 		ModelMetadata $model_metadata,
@@ -118,9 +119,15 @@ class AzureAiFoundryProvider extends AbstractApiProvider {
 			if ( $capability->isImageGeneration() ) {
 				return new AzureAiFoundryImageGenerationModel( $model_metadata, $provider_metadata );
 			}
+			if ( $capability->isEmbeddingGeneration() ) {
+				return new AzureAiFoundryEmbeddingModel( $model_metadata, $provider_metadata );
+			}
+			if ( $capability->isTextToSpeechConversion() ) {
+				return new AzureAiFoundryTextToSpeechModel( $model_metadata, $provider_metadata );
+			}
 		}
 
-		// Default: text generation (also handles chat history, embeddings for now).
+		// Default: text generation (also handles chat history).
 		return new AzureAiFoundryTextGenerationModel( $model_metadata, $provider_metadata );
 	}
 

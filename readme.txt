@@ -4,7 +4,7 @@ Tags: ai, azure, foundry, ai-provider, connectors
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 8.3
-Stable tag: 0.3.3
+Stable tag: 1.0.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Connect WordPress to Azure AI Foundry for text generation, image generation, emb
 
 == Description ==
 
-Azure AI Foundry Connector registers an AI provider with the WordPress 7.0 AI Client, enabling text generation and other capabilities via the [Azure AI Foundry Model Inference API](https://learn.microsoft.com/en-us/rest/api/aifoundry/modelinference/).
+Azure AI Foundry Connector registers an AI provider with the WordPress 7.0 AI Client, enabling text generation, image generation, embeddings, and text-to-speech via the [Azure AI Foundry Model Inference API](https://learn.microsoft.com/en-us/rest/api/aifoundry/modelinference/).
 
 = Features =
 
@@ -79,6 +79,15 @@ The plugin supports five capabilities: `text_generation`, `chat_history`, `image
 The plugin uses `2025-04-01-preview` for the Azure OpenAI surface. This is hardcoded and not user-configurable.
 
 == Changelog ==
+
+= 1.0.0 =
+* Added embedding generation model — supports text-embedding-ada-002, text-embedding-3-small/large deployments.
+* Added text-to-speech model — supports tts-1 and tts-1-hd deployments.
+* Auto-detection now resolves separate deployment names for text, image, embedding, and TTS models.
+* Added audio input modality for text generation models (vision + audio support).
+* Added topK supported option for text generation models.
+* Added AI client conflict detection — warns when the "AI Experiments" plugin overrides the built-in AI client.
+* Fixed TTS response parsing — uses raw body instead of JSON-decoded data to correctly capture audio binary output.
 
 = 0.3.3 =
 * Fixed the Connect & Detect flow so it saves the API key and endpoint before deployment detection.

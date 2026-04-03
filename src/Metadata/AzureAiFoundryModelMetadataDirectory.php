@@ -43,14 +43,18 @@ class AzureAiFoundryModelMetadataDirectory implements ModelMetadataDirectoryInte
 		$model_name = $settings->get_model_name();
 
 		if ( ! empty( $model_name ) ) {
-			$names = self::parseModelNames( $model_name );
-			$text_name  = self::findDeploymentForType( $names, 'text' ) ?? $names[0];
-			$image_name = self::findDeploymentForType( $names, 'image' );
+			$names          = self::parseModelNames( $model_name );
+			$text_name      = self::findDeploymentForType( $names, 'text' ) ?? $names[0];
+			$image_name     = self::findDeploymentForType( $names, 'image' );
+			$embedding_name = self::findDeploymentForType( $names, 'embedding' );
+			$tts_name       = self::findDeploymentForType( $names, 'tts' );
 
 			$this->cached = $this->buildModelsFromCapabilities(
 				$text_name,
 				$text_name,
-				$image_name
+				$image_name,
+				$embedding_name,
+				$tts_name
 			);
 			return $this->cached;
 		}
@@ -164,12 +168,29 @@ class AzureAiFoundryModelMetadataDirectory implements ModelMetadataDirectoryInte
 	 */
 	public static function findDeploymentForType( array $names, string $type ): ?string {
 		// Ordered by preference — newer models first.
-		$image_prefixes = [ 'gpt-image', 'dall-e' ];
-		$skip_prefixes  = [ 'dall-e', 'gpt-image', 'tts', 'whisper' ];
+		$image_prefixes     = [ 'gpt-image', 'dall-e' ];
+		$embedding_prefixes = [ 'text-embedding' ];
+		$tts_prefixes       = [ 'tts' ];
+		$skip_prefixes      = [ 'dall-e', 'gpt-image', 'tts', 'whisper', 'text-embedding' ];
 
 		if ( 'image' === $type ) {
-			// Check each prefix in priority order across all names.
 			foreach ( $image_prefixes as $prefix ) {
+				foreach ( $names as $name ) {
+					if ( str_starts_with( strtolower( $name ), $prefix ) ) {
+						return $name;
+					}
+				}
+			}
+		} elseif ( 'embedding' === $type ) {
+			foreach ( $embedding_prefixes as $prefix ) {
+				foreach ( $names as $name ) {
+					if ( str_starts_with( strtolower( $name ), $prefix ) ) {
+						return $name;
+					}
+				}
+			}
+		} elseif ( 'tts' === $type ) {
+			foreach ( $tts_prefixes as $prefix ) {
 				foreach ( $names as $name ) {
 					if ( str_starts_with( strtolower( $name ), $prefix ) ) {
 						return $name;
@@ -198,23 +219,34 @@ class AzureAiFoundryModelMetadataDirectory implements ModelMetadataDirectoryInte
 	/**
 	 * Build one or more ModelMetadata entries from user-configured capabilities.
 	 *
-	 * When both text_generation and image_generation are enabled, two separate
-	 * model entries are created so the provider can route each to the correct
-	 * model class (text vs image).
+	 * Each distinct capability type (text, image, embedding, TTS) gets its own
+	 * model entry so the provider can route each to the correct model class.
 	 *
-	 * @param string      $id         Model ID (deployment name) for text.
-	 * @param string      $name       Display name.
-	 * @param string|null $image_name Deployment name override for image model.
+	 * @param string      $id             Model ID (deployment name) for text.
+	 * @param string      $name           Display name.
+	 * @param string|null $image_name     Deployment name override for image model.
+	 * @param string|null $embedding_name Deployment name override for embedding model.
+	 * @param string|null $tts_name       Deployment name override for TTS model.
 	 * @return list<ModelMetadata>
 	 */
-	private function buildModelsFromCapabilities( string $id, string $name, ?string $image_name = null ): array {
+	private function buildModelsFromCapabilities(
+		string $id,
+		string $name,
+		?string $image_name = null,
+		?string $embedding_name = null,
+		?string $tts_name = null
+	): array {
 		$cap_strings = SettingsManager::instance()->get_capabilities();
 
 		// Classify capabilities.
-		$text_caps  = [];
-		$image_caps = [];
-		$has_text   = false;
-		$has_image  = false;
+		$text_caps      = [];
+		$image_caps     = [];
+		$embedding_caps = [];
+		$tts_caps       = [];
+		$has_text       = false;
+		$has_image      = false;
+		$has_embedding  = false;
+		$has_tts        = false;
 
 		foreach ( $cap_strings as $cap ) {
 			match ( $cap ) {
@@ -223,8 +255,14 @@ class AzureAiFoundryModelMetadataDirectory implements ModelMetadataDirectoryInte
 					$has_text = true;
 				})(),
 				'chat_history' => $text_caps[] = CapabilityEnum::chatHistory(),
-				'embedding_generation' => $text_caps[] = CapabilityEnum::embeddingGeneration(),
-				'text_to_speech_conversion' => $text_caps[] = CapabilityEnum::textToSpeechConversion(),
+				'embedding_generation' => (function() use ( &$embedding_caps, &$has_embedding ) {
+					$embedding_caps[] = CapabilityEnum::embeddingGeneration();
+					$has_embedding = true;
+				})(),
+				'text_to_speech_conversion' => (function() use ( &$tts_caps, &$has_tts ) {
+					$tts_caps[] = CapabilityEnum::textToSpeechConversion();
+					$has_tts = true;
+				})(),
 				'image_generation' => (function() use ( &$image_caps, &$has_image ) {
 					$image_caps[] = CapabilityEnum::imageGeneration();
 					$has_image = true;
@@ -234,7 +272,7 @@ class AzureAiFoundryModelMetadataDirectory implements ModelMetadataDirectoryInte
 		}
 
 		// Default to text generation + chat history if nothing selected.
-		if ( ! $has_text && ! $has_image ) {
+		if ( ! $has_text && ! $has_image && ! $has_embedding && ! $has_tts ) {
 			$text_caps[] = CapabilityEnum::textGeneration();
 			$text_caps[] = CapabilityEnum::chatHistory();
 			$has_text = true;
@@ -266,13 +304,35 @@ class AzureAiFoundryModelMetadataDirectory implements ModelMetadataDirectoryInte
 		}
 
 		if ( $has_image ) {
-			$image_id   = $image_name ?? ( $has_text ? $id . '-image' : $id );
+			$image_id    = $image_name ?? ( $has_text ? $id . '-image' : $id );
 			$image_label = $image_name ?? $name;
-			$models[] = new ModelMetadata(
+			$models[]    = new ModelMetadata(
 				$image_id,
 				$image_label . ( $has_text ? ' (Image)' : '' ),
 				$image_caps,
 				$this->buildSupportedOptionsForCapabilities( $image_caps )
+			);
+		}
+
+		if ( $has_embedding ) {
+			$embed_id    = $embedding_name ?? $id . '-embedding';
+			$embed_label = $embedding_name ?? $name;
+			$models[]    = new ModelMetadata(
+				$embed_id,
+				$embed_label . ' (Embedding)',
+				$embedding_caps,
+				$this->buildSupportedOptionsForCapabilities( $embedding_caps )
+			);
+		}
+
+		if ( $has_tts ) {
+			$tts_id    = $tts_name ?? $id . '-tts';
+			$tts_label = $tts_name ?? $name;
+			$models[]  = new ModelMetadata(
+				$tts_id,
+				$tts_label . ' (TTS)',
+				$tts_caps,
+				$this->buildSupportedOptionsForCapabilities( $tts_caps )
 			);
 		}
 
@@ -291,14 +351,22 @@ class AzureAiFoundryModelMetadataDirectory implements ModelMetadataDirectoryInte
 	private function buildSupportedOptionsForCapabilities( array $capabilities ): array {
 		$options = [];
 
-		$has_text  = false;
-		$has_image = false;
+		$has_text      = false;
+		$has_image     = false;
+		$has_embedding = false;
+		$has_tts       = false;
 		foreach ( $capabilities as $cap ) {
 			if ( $cap->isTextGeneration() ) {
 				$has_text = true;
 			}
 			if ( $cap->isImageGeneration() ) {
 				$has_image = true;
+			}
+			if ( $cap->isEmbeddingGeneration() ) {
+				$has_embedding = true;
+			}
+			if ( $cap->isTextToSpeechConversion() ) {
+				$has_tts = true;
 			}
 		}
 
@@ -308,6 +376,7 @@ class AzureAiFoundryModelMetadataDirectory implements ModelMetadataDirectoryInte
 				[
 					[ ModalityEnum::text() ],
 					[ ModalityEnum::text(), ModalityEnum::image() ],
+					[ ModalityEnum::text(), ModalityEnum::image(), ModalityEnum::audio() ],
 					[ ModalityEnum::text(), ModalityEnum::document() ],
 					[ ModalityEnum::text(), ModalityEnum::image(), ModalityEnum::document() ],
 				]
@@ -320,6 +389,7 @@ class AzureAiFoundryModelMetadataDirectory implements ModelMetadataDirectoryInte
 			$options[] = new SupportedOption( OptionEnum::temperature() );
 			$options[] = new SupportedOption( OptionEnum::maxTokens() );
 			$options[] = new SupportedOption( OptionEnum::topP() );
+			$options[] = new SupportedOption( OptionEnum::topK() );
 			$options[] = new SupportedOption( OptionEnum::candidateCount() );
 			$options[] = new SupportedOption( OptionEnum::stopSequences() );
 			$options[] = new SupportedOption( OptionEnum::presencePenalty() );
@@ -343,6 +413,27 @@ class AzureAiFoundryModelMetadataDirectory implements ModelMetadataDirectoryInte
 				[ [ ModalityEnum::image() ] ]
 			);
 			$options[] = new SupportedOption( OptionEnum::outputFileType() );
+			$options[] = new SupportedOption( OptionEnum::customOptions() );
+		}
+
+		if ( $has_embedding ) {
+			$options[] = new SupportedOption(
+				OptionEnum::inputModalities(),
+				[ [ ModalityEnum::text() ] ]
+			);
+			$options[] = new SupportedOption( OptionEnum::outputMimeType(), [ 'application/json', 'application/base64' ] );
+			$options[] = new SupportedOption( OptionEnum::customOptions() );
+		}
+
+		if ( $has_tts ) {
+			$options[] = new SupportedOption(
+				OptionEnum::inputModalities(),
+				[ [ ModalityEnum::text() ] ]
+			);
+			$options[] = new SupportedOption(
+				OptionEnum::outputModalities(),
+				[ [ ModalityEnum::audio() ] ]
+			);
 			$options[] = new SupportedOption( OptionEnum::customOptions() );
 		}
 

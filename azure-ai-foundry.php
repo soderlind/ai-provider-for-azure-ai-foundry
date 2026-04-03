@@ -5,7 +5,7 @@
  * Description: Connect WordPress to Azure AI Foundry Model Inference API for text generation, embeddings, and more.
  * Requires at least: 7.0
  * Requires PHP: 8.3
- * Version: 0.3.3
+ * Version: 1.0.0
  * Author: Per Søderlind
  * Author URI: https://soderlind.no/
  * License: GPL-2.0-or-later
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	return;
 }
 
-define( 'AZURE_AI_FOUNDRY_VERSION', '0.3.3' );
+define( 'AZURE_AI_FOUNDRY_VERSION', '1.0.0' );
 define( 'AZURE_AI_FOUNDRY_FILE', __FILE__ );
 define( 'AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID', 'azure_ai_foundry_status' );
 define( 'AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION', 'connectors_ai_azure_ai_foundry_status_api_key' );
@@ -35,6 +35,41 @@ require_once __DIR__ . '/src/autoload.php';
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	require_once __DIR__ . '/vendor/autoload.php';
 }
+
+/**
+ * Detect whether the loaded ProviderMetadata class is missing methods
+ * required by WordPress 7.0, which happens when the old "AI Experiments"
+ * plugin ships an outdated php-ai-client via the Jetpack autoloader.
+ *
+ * @return bool True if the conflict is detected.
+ */
+function has_ai_client_version_conflict(): bool {
+	if ( ! class_exists( \WordPress\AiClient\Providers\DTO\ProviderMetadata::class ) ) {
+		return false;
+	}
+	return ! method_exists(
+		\WordPress\AiClient\Providers\DTO\ProviderMetadata::class,
+		'getAuthenticationMethod'
+	);
+}
+
+/**
+ * Show an admin notice when a conflicting php-ai-client version is detected.
+ */
+function show_ai_client_conflict_notice(): void {
+	if ( ! has_ai_client_version_conflict() ) {
+		return;
+	}
+	printf(
+		'<div class="notice notice-error"><p>%s</p></div>',
+		esc_html__(
+			'Azure AI Foundry Connector: A conflicting AI client library was detected. Please deactivate the "AI Experiments" plugin — its outdated library overrides the version built into WordPress 7.0.',
+			'azure-ai-foundry'
+		)
+	);
+}
+add_action( 'admin_notices', __NAMESPACE__ . '\\show_ai_client_conflict_notice' );
+add_action( 'network_admin_notices', __NAMESPACE__ . '\\show_ai_client_conflict_notice' );
 
 // GitHub Updater — automatic updates from GitHub releases.
 if ( ! class_exists( \Soderlind\WordPress\GitHubUpdater::class ) ) {

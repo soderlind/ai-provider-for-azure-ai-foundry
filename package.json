@@ -1,6 +1,6 @@
 {
 	"name": "azure-ai-foundry",
-	"version": "0.3.3",
+	"version": "1.0.0",
 	"private": true,
 	"scripts": {
 		"build": "wp-scripts build",
