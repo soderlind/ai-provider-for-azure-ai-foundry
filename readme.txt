@@ -1,10 +1,10 @@
-=== Azure AI Foundry Connector ===
+=== AI Provider for Azure AI Foundry ===
 Contributors: suspended
 Tags: ai, azure, foundry, ai-provider, connectors
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 8.3
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ Connect WordPress to Azure AI Foundry for text generation, image generation, emb
 
 == Description ==
 
-Azure AI Foundry Connector registers an AI provider with the WordPress 7.0 AI Client, enabling text generation, image generation, embeddings, and text-to-speech via the [Azure AI Foundry Model Inference API](https://learn.microsoft.com/en-us/rest/api/aifoundry/modelinference/).
+AI Provider for Azure AI Foundry registers an AI provider with the WordPress 7.0 AI Client, enabling text generation, image generation, embeddings, and text-to-speech via the [Azure AI Foundry Model Inference API](https://learn.microsoft.com/en-us/rest/api/aifoundry/modelinference/).
 
 = Features =
 
@@ -79,6 +79,10 @@ The plugin supports five capabilities: `text_generation`, `chat_history`, `image
 The plugin uses `2025-04-01-preview` for the Azure OpenAI surface. This is hardcoded and not user-configurable.
 
 == Changelog ==
+
+= 1.1.1 =
+* Renamed plugin from "Azure AI Foundry Connector" to "AI Provider for Azure AI Foundry" to avoid confusion with official Microsoft products.
+* Fixed GitHub Actions release workflow content-length mismatch error.
 
 = 1.1.0 =
 * Renamed main plugin file to `ai-provider-for-azure-ai-foundry.php` to comply with WordPress plugin naming guidelines.
