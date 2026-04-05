@@ -121,3 +121,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Updater integration for automatic updates from GitHub releases.
 - GitHub Actions workflows for release zip builds.
 - Requires PHP 8.3+ (typed constants, `str_starts_with`, null coalescing assignment).
+
+[1.1.0]: https://github.com/soderlind/azure-ai-foundry/compare/1.0.0...1.1.0
+[1.0.0]: https://github.com/soderlind/azure-ai-foundry/compare/0.3.3...1.0.0
+[0.3.3]: https://github.com/soderlind/azure-ai-foundry/compare/0.3.2...0.3.3
+[0.3.2]: https://github.com/soderlind/azure-ai-foundry/compare/0.3.1...0.3.2
+[0.3.1]: https://github.com/soderlind/azure-ai-foundry/compare/0.3.0...0.3.1
+[0.3.0]: https://github.com/soderlind/azure-ai-foundry/compare/0.2.0...0.3.0
+[0.2.0]: https://github.com/soderlind/azure-ai-foundry/compare/0.1.0...0.2.0
+[0.1.0]: https://github.com/soderlind/azure-ai-foundry/releases/tag/0.1.0
