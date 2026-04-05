@@ -1,11 +1,11 @@
 <?php
 /**
- * Plugin Name: Azure AI Foundry Connector
+ * Plugin Name: AI Provider for Azure AI Foundry
  * Plugin URI:  https://github.com/soderlind/azure-ai-foundry
  * Description: Connect WordPress to Azure AI Foundry Model Inference API for text generation, embeddings, and more.
  * Requires at least: 7.0
  * Requires PHP: 8.3
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: Per Søderlind
  * Author URI: https://soderlind.no/
  * License: GPL-2.0-or-later
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	return;
 }
 
-define( 'AZURE_AI_FOUNDRY_VERSION', '1.1.0' );
+define( 'AZURE_AI_FOUNDRY_VERSION', '1.1.1' );
 define( 'AZURE_AI_FOUNDRY_FILE', __FILE__ );
 define( 'AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID', 'azure_ai_foundry_status' );
 define( 'AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION', 'connectors_ai_azure_ai_foundry_status_api_key' );
@@ -39,7 +39,7 @@ require_once __DIR__ . '/src/autoload.php';
  * @return bool True if the conflict is detected.
  */
 function has_ai_client_version_conflict(): bool {
-	if ( ! class_exists( \WordPress\AiClient\Providers\DTO\ProviderMetadata::class ) ) {
+	if ( ! class_exists( \WordPress\AiClient\Providers\DTO\ProviderMetadata::class) ) {
 		return false;
 	}
 	return ! method_exists(
@@ -160,8 +160,8 @@ add_action( 'connectors-wp-admin_init', __NAMESPACE__ . '\\enqueue_connector_mod
  * @return array
  */
 function filter_connector_script_data( array $data ): array {
-	if ( isset( $data['connectors'][ AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID ] ) ) {
-		unset( $data['connectors'][ AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID ] );
+	if ( isset( $data[ 'connectors' ][ AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID ] ) ) {
+		unset( $data[ 'connectors' ][ AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID ] );
 	}
 
 	return $data;
@@ -207,9 +207,9 @@ add_action( 'wp_connectors_init', __NAMESPACE__ . '\\unregister_from_connector_r
  * instead and toggle its generated option based on real configuration.
  */
 function sync_ai_plugin_credential_sentinel(): void {
-	$has_api_key = '' !== SettingsManager::instance()->get_real_api_key();
+	$has_api_key  = '' !== SettingsManager::instance()->get_real_api_key();
 	$has_endpoint = '' !== SettingsManager::instance()->get_endpoint();
-	$current = get_option( AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION, '' );
+	$current      = get_option( AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION, '' );
 
 	if ( $has_api_key && $has_endpoint ) {
 		if ( '1' !== $current ) {
