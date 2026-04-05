@@ -1,4 +1,4 @@
-# Azure AI Foundry Connector for WordPress
+# AI Provider for Azure AI Foundry
 
 Connect WordPress 7.0+ to [Azure AI Foundry](https://learn.microsoft.com/en-us/rest/api/aifoundry/modelinference/) for text generation, image generation, embeddings, and more.
 
