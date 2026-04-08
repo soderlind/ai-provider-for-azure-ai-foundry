@@ -43,14 +43,14 @@ class AzureAiFoundryProvider extends AbstractApiProvider {
 	 *
 	 * This is the only version supported by /models/* endpoints.
 	 */
-	public const string MODEL_INFERENCE_API_VERSION = '2024-05-01-preview';
+	public const MODEL_INFERENCE_API_VERSION = '2024-05-01-preview';
 
 	/**
 	 * Default API version for the Azure OpenAI API surface.
 	 *
 	 * Used for /openai/deployments/* endpoints (image generation, etc.).
 	 */
-	public const string OPENAI_API_VERSION_DEFAULT = '2025-04-01-preview';
+	public const OPENAI_API_VERSION_DEFAULT = '2025-04-01-preview';
 
 	/**
 	 * Base URL for the Azure AI Foundry Model Inference API.
@@ -71,7 +71,7 @@ class AzureAiFoundryProvider extends AbstractApiProvider {
 	 * @return string Full URL with api-version query parameter.
 	 */
 	public static function apiUrl( string $path, ?string $api_version = null ): string {
-		$base        = static::baseUrl();
+		$base          = static::baseUrl();
 		$api_version ??= self::MODEL_INFERENCE_API_VERSION;
 
 		return $base . '/' . ltrim( $path, '/' ) . '?api-version=' . rawurlencode( $api_version );
@@ -101,7 +101,7 @@ class AzureAiFoundryProvider extends AbstractApiProvider {
 		$base   = static::baseUrl();
 		$parsed = wp_parse_url( $base );
 
-		return ( $parsed['scheme'] ?? 'https' ) . '://' . ( $parsed['host'] ?? '' );
+		return ( $parsed[ 'scheme' ] ?? 'https' ) . '://' . ( $parsed[ 'host' ] ?? '' );
 	}
 
 	/**

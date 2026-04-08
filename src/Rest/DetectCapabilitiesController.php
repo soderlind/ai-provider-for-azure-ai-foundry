@@ -17,15 +17,15 @@ use WP_REST_Server;
 
 class DetectCapabilitiesController {
 
-	public const string NAMESPACE = 'azure-ai-foundry/v1';
-	public const string ROUTE     = '/detect';
+	public const NAMESPACE = 'azure-ai-foundry/v1';
+	public const ROUTE     = '/detect';
 
 	/**
 	 * Register the route.
 	 */
 	public static function register(): void {
 		register_rest_route(
-			self::NAMESPACE,
+			self::NAMESPACE ,
 			self::ROUTE,
 			[
 				'methods'             => WP_REST_Server::CREATABLE,
@@ -37,7 +37,7 @@ class DetectCapabilitiesController {
 						'type'              => 'string',
 						'sanitize_callback' => 'esc_url_raw',
 					],
-					'api_key' => [
+					'api_key'  => [
 						'required'          => true,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -78,8 +78,8 @@ class DetectCapabilitiesController {
 		}
 
 		// Extract the resource root (scheme + host) for OpenAI-compatible probing.
-		$parsed = wp_parse_url( $endpoint );
-		$resource_root = ( $parsed['scheme'] ?? 'https' ) . '://' . ( $parsed['host'] ?? '' );
+		$parsed        = wp_parse_url( $endpoint );
+		$resource_root = ( $parsed[ 'scheme' ] ?? 'https' ) . '://' . ( $parsed[ 'host' ] ?? '' );
 
 		// 1. Try AI Foundry Model Inference /models/info (single-model endpoints).
 		$result = self::probe_ai_foundry( $resource_root . '/models', $api_key, $api_version );
@@ -98,11 +98,11 @@ class DetectCapabilitiesController {
 		}
 
 		// Save detected results directly to the database.
-		if ( ! empty( $result['model_name'] ) ) {
-			update_option( ConnectorSettings::OPTION_MODEL_NAME, $result['model_name'] );
+		if ( ! empty( $result[ 'model_name' ] ) ) {
+			update_option( ConnectorSettings::OPTION_MODEL_NAME, $result[ 'model_name' ] );
 		}
-		if ( ! empty( $result['capabilities'] ) ) {
-			update_option( ConnectorSettings::OPTION_CAPABILITIES, $result['capabilities'] );
+		if ( ! empty( $result[ 'capabilities' ] ) ) {
+			update_option( ConnectorSettings::OPTION_CAPABILITIES, $result[ 'capabilities' ] );
 		}
 
 		return new WP_REST_Response( $result, 200 );
@@ -132,14 +132,14 @@ class DetectCapabilitiesController {
 		}
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
-		if ( ! is_array( $body ) || empty( $body['model_name'] ) ) {
+		if ( ! is_array( $body ) || empty( $body[ 'model_name' ] ) ) {
 			return null;
 		}
 
-		$capabilities = self::map_model_type( $body['model_type'] ?? '' );
+		$capabilities = self::map_model_type( $body[ 'model_type' ] ?? '' );
 
 		return [
-			'model_name'   => sanitize_text_field( $body['model_name'] ),
+			'model_name'   => sanitize_text_field( $body[ 'model_name' ] ),
 			'capabilities' => $capabilities,
 			'source'       => 'ai-foundry-info',
 		];
@@ -182,7 +182,7 @@ class DetectCapabilitiesController {
 			}
 		}
 
-		if ( ! is_array( $body ) || empty( $body['data'] ) || ! is_array( $body['data'] ) ) {
+		if ( ! is_array( $body ) || empty( $body[ 'data' ] ) || ! is_array( $body[ 'data' ] ) ) {
 			return null;
 		}
 
@@ -191,17 +191,17 @@ class DetectCapabilitiesController {
 		$image_candidates     = [];
 		$tts_candidates       = [];
 
-		foreach ( $body['data'] as $model ) {
+		foreach ( $body[ 'data' ] as $model ) {
 			if ( ! is_array( $model ) ) {
 				continue;
 			}
 
-			$id = $model['id'] ?? '';
+			$id = $model[ 'id' ] ?? '';
 			if ( '' === $id ) {
 				continue;
 			}
 
-			$caps = $model['capabilities'] ?? [];
+			$caps = $model[ 'capabilities' ] ?? [];
 			if ( ! is_array( $caps ) ) {
 				continue;
 			}
@@ -213,7 +213,7 @@ class DetectCapabilitiesController {
 			if (
 				str_starts_with( $id_lower, 'gpt-image' )
 				|| str_starts_with( $id_lower, 'dall-e' )
-				|| $is_true( $caps['image_generation'] ?? false )
+				|| $is_true( $caps[ 'image_generation' ] ?? false )
 			) {
 				$image_candidates[] = $id;
 			}
@@ -221,36 +221,36 @@ class DetectCapabilitiesController {
 			// TTS model candidates.
 			if (
 				str_starts_with( $id_lower, 'tts' )
-				|| $is_true( $caps['audio_text_to_speech'] ?? false )
+				|| $is_true( $caps[ 'audio_text_to_speech' ] ?? false )
 			) {
 				$tts_candidates[] = $id;
 			}
 
 			// Track catalog-level capabilities for reference.
-			if ( $is_true( $caps['chat_completion'] ?? false ) ) {
-				$catalog_capabilities['text_generation'] = true;
-				$catalog_capabilities['chat_history']    = true;
+			if ( $is_true( $caps[ 'chat_completion' ] ?? false ) ) {
+				$catalog_capabilities[ 'text_generation' ] = true;
+				$catalog_capabilities[ 'chat_history' ]    = true;
 			}
-			if ( $is_true( $caps['completion'] ?? false ) ) {
-				$catalog_capabilities['text_generation'] = true;
+			if ( $is_true( $caps[ 'completion' ] ?? false ) ) {
+				$catalog_capabilities[ 'text_generation' ] = true;
 			}
-			if ( $is_true( $caps['embeddings'] ?? false ) ) {
-				$catalog_capabilities['embedding_generation'] = true;
+			if ( $is_true( $caps[ 'embeddings' ] ?? false ) ) {
+				$catalog_capabilities[ 'embedding_generation' ] = true;
 			}
 		}
 
 		// ── Probe actual deployments ────────────────────────────
 		// Only deployments that respond become confirmed.
-		$confirmed_deployments = [];
+		$confirmed_deployments  = [];
 		$confirmed_capabilities = [];
 
 		// 1. Probe text deployments (common names) — collect ALL that respond.
-		if ( ! empty( $catalog_capabilities['text_generation'] ) ) {
+		if ( ! empty( $catalog_capabilities[ 'text_generation' ] ) ) {
 			$text_deployments = self::probe_text_deployments( $resource_root, $api_key );
 			foreach ( $text_deployments as $text ) {
-				$confirmed_deployments[]                    = $text;
-				$confirmed_capabilities['text_generation']  = true;
-				$confirmed_capabilities['chat_history']     = true;
+				$confirmed_deployments[]                   = $text;
+				$confirmed_capabilities[ 'text_generation' ] = true;
+				$confirmed_capabilities[ 'chat_history' ]    = true;
 			}
 		}
 
@@ -258,8 +258,8 @@ class DetectCapabilitiesController {
 		$image_candidates = array_unique( $image_candidates );
 		foreach ( $image_candidates as $candidate ) {
 			if ( self::probe_deployment_exists( $resource_root, $api_key, $candidate ) ) {
-				$confirmed_deployments[]                      = $candidate;
-				$confirmed_capabilities['image_generation']   = true;
+				$confirmed_deployments[]                    = $candidate;
+				$confirmed_capabilities[ 'image_generation' ] = true;
 			}
 		}
 
@@ -267,15 +267,15 @@ class DetectCapabilitiesController {
 		$tts_candidates = array_unique( $tts_candidates );
 		foreach ( $tts_candidates as $candidate ) {
 			if ( self::probe_deployment_exists( $resource_root, $api_key, $candidate ) ) {
-				$confirmed_deployments[]                                = $candidate;
-				$confirmed_capabilities['text_to_speech_conversion']    = true;
+				$confirmed_deployments[]                             = $candidate;
+				$confirmed_capabilities[ 'text_to_speech_conversion' ] = true;
 			}
 		}
 
 		// Include embedding capability if catalog reports it (no deployment probe needed;
 		// embeddings are served via the Model Inference API, not a named deployment).
-		if ( ! empty( $catalog_capabilities['embedding_generation'] ) ) {
-			$confirmed_capabilities['embedding_generation'] = true;
+		if ( ! empty( $catalog_capabilities[ 'embedding_generation' ] ) ) {
+			$confirmed_capabilities[ 'embedding_generation' ] = true;
 		}
 
 		if ( empty( $confirmed_capabilities ) ) {
@@ -345,7 +345,7 @@ class DetectCapabilitiesController {
 	 */
 	private static function probe_deployment_exists( string $resource_root, string $api_key, string $deployment ): bool {
 		$api_version = AzureAiFoundryProvider::OPENAI_API_VERSION_DEFAULT;
-		$url = $resource_root
+		$url         = $resource_root
 			. '/openai/deployments/' . rawurlencode( $deployment )
 			. '/chat/completions?api-version=' . rawurlencode( $api_version );
 

@@ -3,6 +3,7 @@
 node_modules/
 tests/
 src/js/
+vendor/
 
 # Files
 .distignore
@@ -14,6 +15,7 @@ composer.lock
 i18n-map.json
 package.json
 package-lock.json
+phpunit.xml.dist
 vitest.config.js
 webpack.config.js
 
