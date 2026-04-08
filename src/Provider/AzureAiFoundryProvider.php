@@ -71,7 +71,7 @@ class AzureAiFoundryProvider extends AbstractApiProvider {
 	 * @return string Full URL with api-version query parameter.
 	 */
 	public static function apiUrl( string $path, ?string $api_version = null ): string {
-		$base        = static::baseUrl();
+		$base          = static::baseUrl();
 		$api_version ??= self::MODEL_INFERENCE_API_VERSION;
 
 		return $base . '/' . ltrim( $path, '/' ) . '?api-version=' . rawurlencode( $api_version );
@@ -101,7 +101,7 @@ class AzureAiFoundryProvider extends AbstractApiProvider {
 		$base   = static::baseUrl();
 		$parsed = wp_parse_url( $base );
 
-		return ( $parsed['scheme'] ?? 'https' ) . '://' . ( $parsed['host'] ?? '' );
+		return ( $parsed[ 'scheme' ] ?? 'https' ) . '://' . ( $parsed[ 'host' ] ?? '' );
 	}
 
 	/**

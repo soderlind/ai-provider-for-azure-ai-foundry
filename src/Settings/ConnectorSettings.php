@@ -123,7 +123,7 @@ class ConnectorSettings {
 			return is_string( $key ) ? $key : '';
 		}
 		return str_repeat( "\u{2022}", min( strlen( $key ) - 4, 16 ) )
-			 . substr( $key, -4 );
+			. substr( $key, -4 );
 	}
 
 	/**

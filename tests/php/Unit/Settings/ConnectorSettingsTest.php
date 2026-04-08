@@ -44,7 +44,7 @@ class ConnectorSettingsTest extends TestCase {
 		$this->assertStringContainsString( "\u{2022}", $result );
 
 		// Masked portion should be at most 16 bullets.
-		$masked_length = strlen( $key ) - 4;
+		$masked_length    = strlen( $key ) - 4;
 		$expected_bullets = min( $masked_length, 16 );
 		$this->assertSame( $expected_bullets + 4, mb_strlen( $result ) );
 	}
