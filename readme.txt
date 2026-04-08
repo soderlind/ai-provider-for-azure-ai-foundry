@@ -32,6 +32,10 @@ AI Provider for Azure AI Foundry registers an AI provider with the WordPress 7.0
 * PHP 8.3+
 * An Azure AI Foundry resource with a deployed model
 
+= Documentation =
+
+* [Building an AI Provider Plugin for WordPress 7](https://github.com/soderlind/ai-provider-for-azure-ai-foundry/blob/main/docs/how-to-add-ai-provider.md), a deep-dive into provider registration, settings, authentication, and the Connectors page UI.
+
 == Installation ==
 
 = From WordPress.org =
