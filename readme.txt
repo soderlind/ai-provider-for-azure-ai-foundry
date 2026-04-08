@@ -4,7 +4,7 @@ Tags: ai, azure, foundry, ai-provider, connectors
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 8.3
-Stable tag: 1.1.1
+Stable tag: 1.2.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -34,12 +34,24 @@ AI Provider for Azure AI Foundry registers an AI provider with the WordPress 7.0
 
 == Installation ==
 
-1. Upload the `azure-ai-foundry` folder to `/wp-content/plugins/`.
-2. Activate the plugin through the 'Plugins' menu in WordPress.
-3. Go to **Settings → Connectors**.
-4. Find "Azure AI Foundry" and click **Set Up**.
-5. Enter your API Key and Endpoint URL.
-6. Click **Connect & Detect** — the plugin probes your endpoint, discovers deployed models, and saves the configuration automatically.
+= From WordPress.org =
+
+1. Go to **Plugins → Add New** in your WordPress admin.
+2. Search for "AI Provider for Azure AI Foundry".
+3. Click **Install Now**, then **Activate**.
+
+= Manual Installation =
+
+1. Download the plugin from WordPress.org.
+2. Upload the `ai-provider-for-azure-ai-foundry` folder to `/wp-content/plugins/`.
+3. Activate the plugin through the **Plugins** menu.
+
+= Configuration =
+
+1. Go to **Settings → Connectors**.
+2. Find "Azure AI Foundry" and click **Set Up**.
+3. Enter your API Key and Endpoint URL.
+4. Click **Connect & Detect** — the plugin probes your endpoint, discovers deployed models, and saves the configuration automatically.
 
 == Frequently Asked Questions ==
 
@@ -78,7 +90,15 @@ The plugin supports five capabilities: `text_generation`, `chat_history`, `image
 
 The plugin uses `2025-04-01-preview` for the Azure OpenAI surface. This is hardcoded and not user-configurable.
 
+== Screenshots ==
+
+1. Azure AI Foundry Connector in the WordPress admin Connectors page, showing detected deployments and capabilities.
+
 == Changelog ==
+
+= 1.2.0 =
+* Added plugin icon for WordPress.org.
+* Updated installation instructions for WordPress.org plugin directory.
 
 = 1.1.1 =
 * Renamed plugin from "Azure AI Foundry Connector" to "AI Provider for Azure AI Foundry" to avoid confusion with official Microsoft products.
