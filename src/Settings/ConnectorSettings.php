@@ -15,12 +15,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 class ConnectorSettings {
 
 	// Option names — prefixed with connectors_ai_ to follow WP convention.
-	public const string OPTION_API_KEY      = 'connectors_ai_azure_ai_foundry_api_key';
-	public const string OPTION_ENDPOINT     = 'connectors_ai_azure_ai_foundry_endpoint';
-	public const string OPTION_MODEL_NAME   = 'connectors_ai_azure_ai_foundry_model_name';
-	public const string OPTION_CAPABILITIES = 'connectors_ai_azure_ai_foundry_capabilities';
+	public const OPTION_API_KEY      = 'connectors_ai_azure_ai_foundry_api_key';
+	public const OPTION_ENDPOINT     = 'connectors_ai_azure_ai_foundry_endpoint';
+	public const OPTION_MODEL_NAME   = 'connectors_ai_azure_ai_foundry_model_name';
+	public const OPTION_CAPABILITIES = 'connectors_ai_azure_ai_foundry_capabilities';
 
-	private const array ALLOWED_CAPABILITIES = [
+	private const ALLOWED_CAPABILITIES = [
 		'text_generation',
 		'chat_history',
 		'image_generation',

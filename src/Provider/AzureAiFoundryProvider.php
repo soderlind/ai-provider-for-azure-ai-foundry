@@ -43,14 +43,14 @@ class AzureAiFoundryProvider extends AbstractApiProvider {
 	 *
 	 * This is the only version supported by /models/* endpoints.
 	 */
-	public const string MODEL_INFERENCE_API_VERSION = '2024-05-01-preview';
+	public const MODEL_INFERENCE_API_VERSION = '2024-05-01-preview';
 
 	/**
 	 * Default API version for the Azure OpenAI API surface.
 	 *
 	 * Used for /openai/deployments/* endpoints (image generation, etc.).
 	 */
-	public const string OPENAI_API_VERSION_DEFAULT = '2025-04-01-preview';
+	public const OPENAI_API_VERSION_DEFAULT = '2025-04-01-preview';
 
 	/**
 	 * Base URL for the Azure AI Foundry Model Inference API.

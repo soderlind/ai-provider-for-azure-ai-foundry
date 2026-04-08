@@ -17,8 +17,8 @@ use WP_REST_Server;
 
 class DetectCapabilitiesController {
 
-	public const string NAMESPACE = 'azure-ai-foundry/v1';
-	public const string ROUTE     = '/detect';
+	public const NAMESPACE = 'azure-ai-foundry/v1';
+	public const ROUTE     = '/detect';
 
 	/**
 	 * Register the route.
