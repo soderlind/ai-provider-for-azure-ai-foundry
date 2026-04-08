@@ -1,6 +1,6 @@
 === AI Provider for Azure AI Foundry ===
 Contributors: PerS
-Tags: ai, azure, foundry, ai-provider, connectors
+Tags: ai, azure, foundry, ai-provider, connector
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 8.3
