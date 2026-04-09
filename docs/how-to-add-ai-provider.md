@@ -11,8 +11,9 @@
 - [2. Settings and Configuration](#2-settings-and-configuration)
 - [3. Connectors Page UI (JavaScript)](#3-connectors-page-ui-javascript)
 - [4. Authentication](#4-authentication)
-- [5. Testing](#5-testing)
-- [6. Common Pitfalls](#6-common-pitfalls)
+- [5. AI Plugin Compatibility (Sentinel Connector)](#5-ai-plugin-compatibility-sentinel-connector)
+- [6. Testing](#6-testing)
+- [7. Common Pitfalls](#7-common-pitfalls)
 
 ---
 
@@ -575,9 +576,115 @@ add_action( 'init', __NAMESPACE__ . '\\setup_authentication', 30 );
 
 ---
 
-## 5. Testing
+## 5. AI Plugin Compatibility (Sentinel Connector)
 
-### 5.1 Vitest Configuration
+The WordPress **AI plugin** (`wp-content/plugins/ai/`) checks `wp_get_connectors()` for connectors of type `ai_provider` that have a non-empty API-key option. Because your plugin unregisters its visible connector (§3.5), the AI plugin can't see it. The fix is a **sentinel connector** — a hidden, internal connector whose only purpose is signalling "this provider is configured".
+
+### 5.1 Define Sentinel Constants
+
+```php
+define( 'AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID', 'azure_ai_foundry_status' );
+define( 'AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION', 'connectors_ai_azure_ai_foundry_status_api_key' );
+```
+
+The option name **must** follow the pattern `connectors_ai_{sentinel_id}_api_key` — this is the option the AI plugin looks up.
+
+### 5.2 Register the Sentinel in `wp_connectors_init`
+
+After unregistering your real connector, register the hidden sentinel:
+
+```php
+function unregister_from_connector_registry( \WP_Connector_Registry $registry ): void {
+    // Remove the auto-created connector.
+    if ( $registry->is_registered( 'azure-ai-foundry' ) ) {
+        $registry->unregister( 'azure-ai-foundry' );
+    }
+
+    // Register a hidden sentinel so the AI plugin detects us.
+    if ( ! $registry->is_registered( AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID ) ) {
+        $registry->register(
+            AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID,
+            [
+                'name'           => __( 'Azure AI Foundry Status', 'azure-ai-foundry' ),
+                'description'    => __( 'Internal compatibility connector for AI plugin detection.', 'azure-ai-foundry' ),
+                'type'           => 'ai_provider',
+                'authentication' => [
+                    'method' => 'api_key',
+                ],
+            ]
+        );
+    }
+}
+add_action( 'wp_connectors_init', __NAMESPACE__ . '\\unregister_from_connector_registry' );
+```
+
+### 5.3 Sync the Sentinel Option
+
+Toggle the sentinel option based on whether the provider is actually configured. Run at `init` priority 35 (after authentication setup at 30):
+
+```php
+function sync_ai_plugin_credential_sentinel(): void {
+    $has_api_key  = '' !== SettingsManager::instance()->get_real_api_key();
+    $has_endpoint = '' !== SettingsManager::instance()->get_endpoint();
+    $current      = get_option( AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION, '' );
+
+    if ( $has_api_key && $has_endpoint ) {
+        if ( '1' !== $current ) {
+            update_option( AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION, '1' );
+        }
+        return;
+    }
+
+    if ( '' !== $current ) {
+        delete_option( AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION );
+    }
+}
+add_action( 'init', __NAMESPACE__ . '\\sync_ai_plugin_credential_sentinel', 35 );
+```
+
+> **Tip:** If your provider doesn't require an API key (e.g., a local server like exo), trigger the sentinel on endpoint alone.
+
+### 5.4 Hide the Sentinel from the Connectors Page
+
+Filter the sentinel out of the script module data so it doesn't appear as a duplicate entry:
+
+```php
+function filter_connector_script_data( array $data ): array {
+    if ( isset( $data['connectors'][ AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID ] ) ) {
+        unset( $data['connectors'][ AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID ] );
+    }
+    return $data;
+}
+add_filter( 'script_module_data_options-connectors-wp-admin', __NAMESPACE__ . '\\filter_connector_script_data' );
+add_filter( 'script_module_data_connectors-wp-admin', __NAMESPACE__ . '\\filter_connector_script_data' );
+```
+
+### 5.5 Summary Flow
+
+```
+┌─────────────────────────────────────────────────────┐
+│  wp_connectors_init                                 │
+│  1. Unregister 'azure-ai-foundry' (prevent core UI) │
+│  2. Register 'azure_ai_foundry_status' (sentinel)   │
+├─────────────────────────────────────────────────────┤
+│  init @ priority 35                                 │
+│  3. Sync sentinel option → '1' when configured      │
+├─────────────────────────────────────────────────────┤
+│  script_module_data_*-connectors-wp-admin           │
+│  4. Hide sentinel from Connectors UI                │
+├─────────────────────────────────────────────────────┤
+│  AI plugin reads wp_get_connectors()                │
+│  5. Finds ai_provider with non-empty api_key → ✅   │
+└─────────────────────────────────────────────────────┘
+```
+
+Without the sentinel, the AI plugin shows: *"The AI plugin requires a valid AI Connector to function properly."*
+
+---
+
+## 6. Testing
+
+### 6.1 Vitest Configuration
 
 ```js
 // vitest.config.js
@@ -602,7 +709,7 @@ export default defineConfig( {
 } );
 ```
 
-### 5.2 Mock the Connectors Module
+### 6.2 Mock the Connectors Module
 
 ```js
 // tests/js/__mocks__/@wordpress/connectors.js
@@ -611,7 +718,7 @@ export const __experimentalConnectorItem = ( { children } ) => children ?? null;
 export const __experimentalDefaultConnectorSettings = ( { children } ) => children ?? null;
 ```
 
-### 5.3 Setup Globals
+### 6.3 Setup Globals
 
 ```js
 // tests/js/setup-globals.js
@@ -641,7 +748,7 @@ window.wp = {
 };
 ```
 
-### 5.4 Test the AI Client Integration
+### 6.4 Test the AI Client Integration
 
 ```php
 // Test in WP-CLI or custom page:
@@ -656,7 +763,7 @@ echo $result->getText();
 
 ---
 
-## 6. Common Pitfalls
+## 7. Common Pitfalls
 
 ### Provider not appearing on Connectors page?
 
@@ -683,6 +790,24 @@ RC1 validates keys on save by calling `isProviderConfigured()`. If your provider
 ### API key shows as all bullets (no last 4 chars)?
 
 Double-masking: both core and your `option_` filter masked the key. **Fix:** Unregister from the connector registry, or remove your `option_` filter.
+
+### AI plugin says "requires a valid AI Connector"?
+
+You're missing the sentinel connector. See [§5 AI Plugin Compatibility](#5-ai-plugin-compatibility-sentinel-connector). The AI plugin looks for `ai_provider`-type connectors with a non-empty API-key option — your custom UI connector is invisible after unregistering.
+
+### `get_option()` returns empty despite `register_setting` default?
+
+When you call `get_option( 'my_option', '' )` with an explicit fallback, WordPress **skips** the default registered via `register_setting()`. Call without or with `false`:
+
+```php
+// ❌ Suppresses the registered default
+$val = get_option( 'connectors_ai_my_endpoint', '' );
+
+// ✅ Uses the registered default from register_setting()
+$val = get_option( 'connectors_ai_my_endpoint' );
+```
+
+This is especially relevant in sentinel sync functions where the setting may never be explicitly saved to the database.
 
 ### "No models found that support text_generation for this prompt"?
 

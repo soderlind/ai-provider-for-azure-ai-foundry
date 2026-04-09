@@ -31,13 +31,27 @@ Connect WordPress 7.0+ to [Azure AI Foundry](https://learn.microsoft.com/en-us/r
 
 ## Installation
 
+### From GitHub
+
 1. Download [`ai-provider-for-azure-ai-foundry.zip`](https://github.com/soderlind/azure-ai-foundry/releases/latest/download/ai-provider-for-azure-ai-foundry.zip)
 2. Upload via  `Plugins → Add New → Upload Plugin`
 3. Activate via `WordPress Admin → Plugins`
+
+### From [WordPress.org](https://wordpress.org/plugins/ai-provider-for-azure-ai-foundry/)
+
+1. Go to **Plugins > Add New**
+2. Search for "AI Provider for Azure AI Foundry"
+3. Click **Install Now** and **Activate**
+
+
+Then:
+
 4. Go to **Settings → Connectors** and configure the Azure AI Foundry connector:
    - **API Key** — your Azure AI Foundry API key.
    - **Endpoint URL** — e.g. `https://my-resource.services.ai.azure.com/api/projects/PROJECT-NAME`.
 5. Click **Connect & Detect** — the plugin probes your endpoint, discovers deployed models, and saves the configuration automatically.
+
+
 
 ## Configuration via Environment Variables
 
