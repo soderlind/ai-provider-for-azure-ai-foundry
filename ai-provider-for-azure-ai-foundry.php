@@ -5,7 +5,7 @@
  * Description: Connect WordPress to Azure AI Foundry Model Inference API for text generation, embeddings, and more.
  * Requires at least: 7.0
  * Requires PHP: 8.3
- * Version: 1.2.1
+ * Version: 1.2.2
  * Author: Per Søderlind
  * Author URI: https://soderlind.no/
  * License: GPL-2.0-or-later
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	return;
 }
 
-define( 'AZURE_AI_FOUNDRY_VERSION', '1.2.1' );
+define( 'AZURE_AI_FOUNDRY_VERSION', '1.2.2' );
 define( 'AZURE_AI_FOUNDRY_FILE', __FILE__ );
 define( 'AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID', 'azure_ai_foundry_status' );
 define( 'AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION', 'connectors_ai_azure_ai_foundry_status_api_key' );
@@ -223,3 +223,35 @@ function sync_ai_plugin_credential_sentinel(): void {
 	}
 }
 add_action( 'init', __NAMESPACE__ . '\\sync_ai_plugin_credential_sentinel', 35 );
+
+/**
+ * Prepend Azure AI Foundry text-generation models to the AI plugin's preferred list.
+ *
+ * Without this, the AI plugin's PromptBuilder ignores Azure models when
+ * selecting a provider for text generation, since they are not in the
+ * default preferred list (which only covers OpenAI, Google, and Anthropic).
+ *
+ * @param array<int, array{string, string}> $preferred The current preferred models.
+ * @return array<int, array{string, string}>
+ */
+function prepend_azure_preferred_text_models( array $preferred ): array {
+	try {
+		$dir    = AzureAiFoundryProvider::modelMetadataDirectory();
+		$models = $dir->listModelMetadata();
+	} catch ( \Exception $e ) {
+		return $preferred;
+	}
+
+	$azure = [];
+	foreach ( $models as $meta ) {
+		foreach ( $meta->getSupportedCapabilities() as $cap ) {
+			if ( $cap->isTextGeneration() ) {
+				$azure[] = [ 'azure-ai-foundry', $meta->getId() ];
+				break;
+			}
+		}
+	}
+
+	return array_merge( $azure, $preferred );
+}
+add_filter( 'wpai_preferred_text_models', __NAMESPACE__ . '\\prepend_azure_preferred_text_models' );
