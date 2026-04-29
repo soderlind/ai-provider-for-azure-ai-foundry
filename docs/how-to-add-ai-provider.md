@@ -205,9 +205,27 @@ use WordPress\AiClient\Providers\OpenAiCompatibleImplementation\AbstractOpenAiCo
  * - Tool/function calls
  */
 class AzureAiFoundryTextGenerationModel extends AbstractOpenAiCompatibleTextGenerationModel {
-    // Nothing to override — the base class handles everything.
-    // Request URL: {baseUrl}/chat/completions?api-version=...
+
+    /**
+     * Build the HTTP request for this provider's API.
+     *
+     * The SDK's AbstractOpenAiCompatibleTextGenerationModel declares this
+     * as an abstract method. Every model class MUST implement it.
+     */
+    protected function createRequest(
+        HttpMethodEnum $method,
+        string $path,
+        array $headers = [],
+        $data = null
+    ): Request {
+        $url = rtrim( AzureAiFoundryProvider::baseUrl(), '/' ) . '/' . ltrim( $path, '/' );
+
+        return new Request( $method, $url, $headers, $data, $this->getRequestOptions() );
+    }
 }
+```
+
+> **Important:** The `createRequest()` method is abstract in the SDK. If you omit it, PHP throws a fatal error: *"Class contains 1 abstract method and must therefore be declared abstract or implement the remaining methods"*. See [§7 Common Pitfalls](#model-class-fatal-abstract-method).
 ```
 
 ---
@@ -564,14 +582,58 @@ function setup_authentication(): void {
 
     $api_key = SettingsManager::instance()->get_real_api_key();
 
-    if ( ! empty( $api_key ) ) {
-        AiClient::defaultRegistry()->setProviderRequestAuthentication(
-            'azure-ai-foundry',  // Must match provider slug
-            new Http\AzureAiFoundryRequestAuthentication( $api_key )
-        );
-    }
+    // Always register authentication — the SDK requires an instance even
+    // when the provider does not need a key. Without this, the PromptBuilder
+    // throws "RequestAuthenticationInterface instance not set" when it tries
+    // to use a model from this provider.
+    AiClient::defaultRegistry()->setProviderRequestAuthentication(
+        'azure-ai-foundry',  // Must match provider slug
+        new Http\AzureAiFoundryRequestAuthentication( $api_key ?: '' )
+    );
 }
 add_action( 'init', __NAMESPACE__ . '\\setup_authentication', 30 );
+```
+
+> **Pitfall:** If you guard `setProviderRequestAuthentication()` behind `if ( ! empty( $api_key ) )`, then when the PromptBuilder selects your model (because the provider reports `isConfigured=true`), the model has no auth instance and the request fails. Always register — empty string is fine.
+
+### 4.3 Whitelist Local/Private Hosts (Self-hosted Providers)
+
+The AI Client SDK uses `wp_safe_remote_request()` which **blocks** requests to private/loopback IPs and non-standard ports. If your provider runs locally (e.g., exo, Ollama, llama.cpp), add these filters:
+
+```php
+/**
+ * Allow the provider endpoint host through wp_safe_remote_request.
+ */
+function allow_provider_host( bool $is_external, string $host ): bool {
+    if ( $is_external ) {
+        return true;
+    }
+    $endpoint = SettingsManager::instance()->get_endpoint();
+    $provider_host = wp_parse_url( $endpoint, PHP_URL_HOST );
+    if ( $provider_host && strtolower( $host ) === strtolower( $provider_host ) ) {
+        return true;
+    }
+    return $is_external;
+}
+add_filter( 'http_request_host_is_external', __NAMESPACE__ . '\\allow_provider_host', 10, 2 );
+
+/**
+ * Allow the provider endpoint port through wp_safe_remote_request.
+ * Only ports 80, 443, and 8080 are allowed by default.
+ */
+function allow_provider_port( array $ports, string $host ): array {
+    $endpoint = SettingsManager::instance()->get_endpoint();
+    $provider_host = wp_parse_url( $endpoint, PHP_URL_HOST );
+    $provider_port = wp_parse_url( $endpoint, PHP_URL_PORT );
+    if ( $provider_host && $provider_port && strtolower( $host ) === strtolower( $provider_host ) ) {
+        $ports[] = (int) $provider_port;
+    }
+    return $ports;
+}
+add_filter( 'http_allowed_safe_ports', __NAMESPACE__ . '\\allow_provider_port', 10, 2 );
+```
+
+> Without these filters, requests to `localhost:11434` (Ollama), `localhost:52415` (exo), or any private IP silently fail with a network error.
 ```
 
 ---
@@ -808,6 +870,59 @@ $val = get_option( 'connectors_ai_my_endpoint' );
 ```
 
 This is especially relevant in sentinel sync functions where the setting may never be explicitly saved to the database.
+
+### Model class fatal: abstract method `createRequest` {#model-class-fatal-abstract-method}
+
+```
+Class MyTextGenerationModel contains 1 abstract method and must therefore
+be declared abstract or implement the remaining methods
+```
+
+The SDK's `AbstractOpenAiCompatibleTextGenerationModel` declares `createRequest()` as abstract. Every model class must implement it to build the provider-specific URL:
+
+```php
+protected function createRequest( HttpMethodEnum $method, string $path, array $headers = [], $data = null ): Request {
+    $url = rtrim( MyProvider::baseUrl(), '/' ) . '/' . ltrim( $path, '/' );
+    return new Request( $method, $url, $headers, $data, $this->getRequestOptions() );
+}
+```
+
+### "RequestAuthenticationInterface instance not set"?
+
+The PromptBuilder selected a model from your provider, but no auth was registered. This happens when:
+
+1. `setup_authentication()` only calls `setProviderRequestAuthentication()` when the API key is non-empty
+2. Your provider reports `isConfigured=true` (e.g., via `ListModelsApiBasedProviderAvailability`), so the PromptBuilder considers it a valid candidate
+3. The PromptBuilder instantiates the model and tries to send a request — no auth instance → error
+
+**Fix:** Always register auth, even with an empty key. See [§4.2](#42-wire-up-authentication).
+
+### "Error generating titles" / wrong provider used?
+
+The AI plugin's `wp_ai_client_prompt()` does **not** call `->usingProvider()`. It uses `using_model_preference()` with models from the `wpai_preferred_text_models` filter. If none of the preferred models match your provider, the PromptBuilder **falls back to the first configured provider alphabetically**.
+
+If another provider sorts first but has broken auth, you get an error.
+**Fix:** Hook the filter to add your models:
+
+```php
+function prepend_my_preferred_models( array $preferred ): array {
+    try {
+        $models = MyProvider::modelMetadataDirectory()->listModelMetadata();
+    } catch ( \Exception $e ) {
+        return $preferred;
+    }
+    $mine = [];
+    foreach ( $models as $meta ) {
+        $mine[] = [ 'my-provider', $meta->getId() ];
+    }
+    return array_merge( $mine, $preferred );
+}
+add_filter( 'wpai_preferred_text_models', __NAMESPACE__ . '\\prepend_my_preferred_models' );
+```
+
+### Requests to localhost/private IPs fail silently?
+
+`wp_safe_remote_request()` blocks loopback addresses and non-standard ports. See [§4.3](#43-whitelist-localprivate-hosts-self-hosted-providers) for the required `http_request_host_is_external` and `http_allowed_safe_ports` filters.
 
 ### "No models found that support text_generation for this prompt"?
 
