@@ -4,7 +4,7 @@ Tags: ai, azure, foundry, ai-provider, connector
 Requires at least: 7.0
 Tested up to: 7.0
 Requires PHP: 8.3
-Stable tag: 1.2.2
+Stable tag: 1.2.3
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -99,6 +99,9 @@ The plugin uses `2025-04-01-preview` for the Azure OpenAI surface. This is hardc
 1. Azure AI Foundry Connector in the WordPress admin Connectors page, showing detected deployments and capabilities.
 
 == Changelog ==
+
+= 1.2.3 =
+* Fix AI plugin connector detection on WordPress 7.0 RC3 by pointing the hidden sentinel connector at its synced setting.
 
 = 1.2.2 =
 * Added `wpai_preferred_text_models` filter to prepend Azure text-generation models to the AI plugin preferred list.
