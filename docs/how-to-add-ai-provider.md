@@ -649,7 +649,9 @@ define( 'AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_ID', 'azure_ai_foundry_status' );
 define( 'AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION', 'connectors_ai_azure_ai_foundry_status_api_key' );
 ```
 
-The option name **must** follow the pattern `connectors_ai_{sentinel_id}_api_key` — this is the option the AI plugin looks up.
+The option can use any stable name, but the sentinel connector **must explicitly declare it** via `authentication.setting_name`. WordPress 7.0 RC3 auto-generates connector settings as `connectors_{type}_{id}_api_key` (for this sentinel, `connectors_ai_provider_azure_ai_foundry_status_api_key`), which does not match the older `connectors_ai_{sentinel_id}_api_key` convention used by the AI plugin compatibility shim.
+
+In practice: define the option you sync, then pass that exact option to the connector registry.
 
 ### 5.2 Register the Sentinel in `wp_connectors_init`
 
@@ -671,7 +673,8 @@ function unregister_from_connector_registry( \WP_Connector_Registry $registry ):
                 'description'    => __( 'Internal compatibility connector for AI plugin detection.', 'azure-ai-foundry' ),
                 'type'           => 'ai_provider',
                 'authentication' => [
-                    'method' => 'api_key',
+                    'method'       => 'api_key',
+                    'setting_name' => AZURE_AI_FOUNDRY_AI_PLUGIN_SENTINEL_OPTION,
                 ],
             ]
         );
@@ -736,11 +739,13 @@ add_filter( 'script_module_data_connectors-wp-admin', __NAMESPACE__ . '\\filter_
 │  4. Hide sentinel from Connectors UI                │
 ├─────────────────────────────────────────────────────┤
 │  AI plugin reads wp_get_connectors()                │
-│  5. Finds ai_provider with non-empty api_key → ✅   │
+│  5. Reads setting_name option → configured          │
 └─────────────────────────────────────────────────────┘
 ```
 
 Without the sentinel, the AI plugin shows: *"The AI plugin requires a valid AI Connector to function properly."*
+
+If the sentinel exists but omits `authentication.setting_name`, the same warning can still appear on WordPress 7.0 RC3 and later because the AI plugin checks the registry-provided setting name, not the option your plugin happens to sync.
 
 ---
 
@@ -855,7 +860,9 @@ Double-masking: both core and your `option_` filter masked the key. **Fix:** Unr
 
 ### AI plugin says "requires a valid AI Connector"?
 
-You're missing the sentinel connector. See [§5 AI Plugin Compatibility](#5-ai-plugin-compatibility-sentinel-connector). The AI plugin looks for `ai_provider`-type connectors with a non-empty API-key option — your custom UI connector is invisible after unregistering.
+You're missing the sentinel connector, or the sentinel points at the wrong option. See [§5 AI Plugin Compatibility](#5-ai-plugin-compatibility-sentinel-connector). The AI plugin looks for `ai_provider`-type connectors with a non-empty API-key option using the connector's `authentication.setting_name` — your custom UI connector is invisible after unregistering.
+
+For WordPress 7.0 RC3 and later, do not rely on the registry's generated setting name for the sentinel. Always set `authentication.setting_name` to the exact option your sync function updates.
 
 ### `get_option()` returns empty despite `register_setting` default?
 
@@ -969,6 +976,7 @@ ProviderTypeEnum::client()  // Browser-based (WebLLM)
 | Beta 6  | Core binds connector API keys at `init` priority 20. Use priority 30 for custom auth. |
 | RC1     | `ConnectorItem` prop renamed `icon` → `logo`. Core validates keys on save. Unregister from connector registry for custom UI. |
 | RC2     | Provider ID now accepts hyphens (`/^[a-z0-9_-]+$/`). |
+| RC3     | Connector registry generated API-key setting names include the connector type (`connectors_{type}_{id}_api_key`). Sentinel connectors must explicitly set `authentication.setting_name` to the synced option. |
 
 ---
 
