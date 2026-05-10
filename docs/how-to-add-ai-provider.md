@@ -21,7 +21,7 @@
 
 WordPress 7.0 introduces two systems that work together:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    WP Admin UI                              │
 │      Settings → Connectors page (React, script modules)     │
@@ -34,10 +34,8 @@ WordPress 7.0 introduces two systems that work together:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-| Layer               | Purpose |
-|---------------------|---------|
-| **AI Client SDK**   | PHP library at `wp-includes/php-ai-client/` — defines providers, models, capabilities, and the registry |
-| **Connectors Page** | React admin page at Settings → Connectors — UI for API keys and provider settings |
+- **AI Client SDK**: PHP library at `wp-includes/php-ai-client/` — defines providers, models, capabilities, and the registry.
+- **Connectors Page**: React admin page at Settings → Connectors — UI for API keys and provider settings.
 
 **Your plugin bridges both:** register a PHP provider with the AI Client and register a JS connector with the Connectors page.
 
@@ -79,6 +77,7 @@ add_action( 'init', __NAMESPACE__ . '\\register_provider', 5 );
 ```
 
 **Key points:**
+
 - Register at `init` priority 5 (before core connector binding at priority 20)
 - Guard against missing `AiClient` class for backward compatibility
 - Use `hasProvider()` to avoid duplicate registration
@@ -226,7 +225,6 @@ class AzureAiFoundryTextGenerationModel extends AbstractOpenAiCompatibleTextGene
 ```
 
 > **Important:** The `createRequest()` method is abstract in the SDK. If you omit it, PHP throws a fatal error: *"Class contains 1 abstract method and must therefore be declared abstract or implement the remaining methods"*. See [§7 Common Pitfalls](#model-class-fatal-abstract-method).
-```
 
 ---
 
@@ -339,10 +337,8 @@ class SettingsManager {
 
 WordPress 7.0 uses two script systems:
 
-| System | Examples | How to Use |
-|--------|----------|------------|
-| **Script Modules** | `@wordpress/connectors` | `import { ... } from '...'` |
-| **Classic Scripts** | `api-fetch`, `element`, `i18n`, `components` | `window.wp.apiFetch`, etc. |
+- **Script Modules**: `@wordpress/connectors` via `import { ... } from '...'`.
+- **Classic Scripts**: `api-fetch`, `element`, `i18n`, `components` via `window.wp.*` globals.
 
 **Only `@wordpress/connectors` is a script module.** Everything else must be accessed via `window.wp.*` globals.
 
@@ -634,7 +630,6 @@ add_filter( 'http_allowed_safe_ports', __NAMESPACE__ . '\\allow_provider_port', 
 ```
 
 > Without these filters, requests to `localhost:11434` (Ollama), `localhost:52415` (exo), or any private IP silently fail with a network error.
-```
 
 ---
 
@@ -726,7 +721,7 @@ add_filter( 'script_module_data_connectors-wp-admin', __NAMESPACE__ . '\\filter_
 
 ### 5.5 Summary Flow
 
-```
+```text
 ┌─────────────────────────────────────────────────────┐
 │  wp_connectors_init                                 │
 │  1. Unregister 'azure-ai-foundry' (prevent core UI) │
@@ -880,7 +875,7 @@ This is especially relevant in sentinel sync functions where the setting may nev
 
 ### Model class fatal: abstract method `createRequest` {#model-class-fatal-abstract-method}
 
-```
+```text
 Class MyTextGenerationModel contains 1 abstract method and must therefore
 be declared abstract or implement the remaining methods
 ```
@@ -945,6 +940,7 @@ add_filter( 'wpai_preferred_text_models', __NAMESPACE__ . '\\prepend_my_preferre
 ### Provider ID Format
 
 Provider IDs must match `/^[a-z0-9_-]+$/`:
+
 - Lowercase letters, digits, underscores, hyphens
 - Used in `ProviderMetadata`, `registerConnector()`, `setProviderRequestAuthentication()`, and `usingProvider()`
 
@@ -970,13 +966,11 @@ ProviderTypeEnum::client()  // Browser-based (WebLLM)
 
 ## WordPress Version Compatibility
 
-| Version | Notable Changes |
-|---------|-----------------|
-| Beta 3  | Connectors page moved to `options-connectors.php`. Hook both variants. |
-| Beta 6  | Core binds connector API keys at `init` priority 20. Use priority 30 for custom auth. |
-| RC1     | `ConnectorItem` prop renamed `icon` → `logo`. Core validates keys on save. Unregister from connector registry for custom UI. |
-| RC2     | Provider ID now accepts hyphens (`/^[a-z0-9_-]+$/`). |
-| RC3     | Connector registry generated API-key setting names include the connector type (`connectors_{type}_{id}_api_key`). Sentinel connectors must explicitly set `authentication.setting_name` to the synced option. |
+- **Beta 3**: Connectors page moved to `options-connectors.php`. Hook both variants.
+- **Beta 6**: Core binds connector API keys at `init` priority 20. Use priority 30 for custom auth.
+- **RC1**: `ConnectorItem` prop renamed `icon` → `logo`. Core validates keys on save. Unregister from connector registry for custom UI.
+- **RC2**: Provider ID now accepts hyphens (`/^[a-z0-9_-]+$/`).
+- **RC3**: Connector registry generated API-key setting names include the connector type (`connectors_{type}_{id}_api_key`). Sentinel connectors must explicitly set `authentication.setting_name` to the synced option.
 
 ---
 
