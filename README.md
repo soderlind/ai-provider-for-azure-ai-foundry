@@ -21,6 +21,7 @@ Connect WordPress 7.0+ to [Azure AI Foundry](https://learn.microsoft.com/en-us/r
 
 ## Documentation
 
+- [Developer Guide: Using `wp_ai_client_prompt()`](docs/developer.md) — API examples for text generation, images, TTS, embeddings, and multi-turn chat.
 - [How to Build an AI Provider Plugin for WordPress 7](docs/how-to-add-ai-provider.md) — deep-dive into provider registration, settings, authentication, and the Connectors page UI.
 
 ## Requirements
