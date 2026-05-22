@@ -1,6 +1,6 @@
 # Developer Guide: Using `wp_ai_client_prompt()`
 
-This guide demonstrates how to use the WordPress 7.0 AI Client API with the Azure AI Foundry provider.
+This guide demonstrates how to use the WordPress 7.0 AI Client API with the Azure AI Foundry provider. The examples also apply to any provider registered with the AI plugin, such as OpenAI, Anthropic, or Google Gemini.
 
 ---
 
