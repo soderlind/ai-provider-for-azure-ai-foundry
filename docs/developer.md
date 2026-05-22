@@ -2,6 +2,8 @@
 
 This guide demonstrates how to use the WordPress 7.0 AI Client API with the Azure AI Foundry provider. The examples also apply to any provider registered with `Settings->Connectors`, such as **OpenAI**, **Anthropic**, or **Google Gemini**.
 
+>Obvious note: The provider must have the relevant capabilities (e.g. text generation, image generation) for the requested operation.
+
 ---
 
 ## Quick Start
