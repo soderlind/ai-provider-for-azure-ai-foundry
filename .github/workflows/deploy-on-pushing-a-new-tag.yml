@@ -14,8 +14,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build plugin
-        run: composer install --no-dev
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Build JS
+        run: |
+          npm ci
+          npm run build
+
+      - name: Verify build output
+        run: test -f build/connectors.js || { echo "ERROR: build/connectors.js is missing"; exit 1; }
 
       - name: WordPress.org Plugin Deploy
         uses: 10up/action-wordpress-plugin-deploy@stable

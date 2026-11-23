@@ -1,5 +1,10 @@
 # Directories
+.git/
 .github/
+.vscode/
+.wordpress-org/
+.phpunit.cache/
+docs/
 node_modules/
 tests/
 src/js/
@@ -7,9 +12,13 @@ vendor/
 
 # Files
 .distignore
+.DS_Store
 .editorconfig
 .gitattributes
 .gitignore
+.phpunit.result.cache
+CHANGELOG.md
+README.md
 composer.json
 composer.lock
 i18n-map.json
@@ -20,4 +29,5 @@ vitest.config.js
 webpack.config.js
 
 # Patterns
+*.log
 *.map

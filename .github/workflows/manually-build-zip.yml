@@ -38,7 +38,7 @@ jobs:
           type: 'zip'
           filename: ${{ env.PLUGIN_ZIP }}
           exclusions: >-
-            *.git* /*.github/* /*.vscode/* /*node_modules/* /*tests/* /*docs/*
+            *.git* /*.github/* /*.vscode/* /*.wordpress-org/* /*src/js/* /*node_modules/* /*tests/* /*docs/*
             composer.json composer.lock package.json package-lock.json
             phpunit.xml phpunit.xml.dist phpcs.xml vitest.config.js i18n-map.json
             webpack.config.js .editorconfig .eslintignore .phpunit.result.cache
